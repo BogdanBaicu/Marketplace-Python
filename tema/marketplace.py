@@ -74,12 +74,12 @@ class Marketplace:
         """
         logging.info("Entering publish with parameters: %s  ,  %s", str(producer_id), str(product))
 
-        #check if producer_id is valid
+        # check if producer_id is valid
         if not producer_id in  self.producers:
             logging.error("Error publish: producer_id %s does not exist", str(producer_id))
             return False
 
-        #check if producer's queue is not full
+        # check if producer's queue is not full
         if len(self.producers[producer_id]) == self.queue_size_per_producer:
             logging.error("Error publish: producer %s has the queue full", str(producer_id))
             return False
@@ -129,7 +129,7 @@ class Marketplace:
         logging.info("Entering add_to_cart with parameters: %s  ,  %s", str(cart_id), str(product))
         # the lock is used to prevent multiple threads from doing operations simultaneously,
         # preventing race condition
-        # search for the product in every producer's list, if the product existsm add it to the
+        # search for the product in every producer's list, if the product exists add it to the
         # cart, mark it as reserved
         try:
             with self.cart_lock:
@@ -165,7 +165,7 @@ class Marketplace:
             with self.cart_lock:
                 for item in self.carts[cart_id]:
                     if item[0] == product:
-                        # remove from carte
+                        # remove from cart
                         self.carts[cart_id].remove(item)
                         # mark as not reserved
                         for _, value in self.producers.items():
