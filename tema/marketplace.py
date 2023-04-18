@@ -33,6 +33,7 @@ class Marketplace:
         self.carts = {} # dict containing all carts
         self.register_producer_lock = Lock()
         self.new_cart_lock = Lock()
+        self.cart_lock = Lock()
 
     def register_producer(self):
         """
@@ -125,7 +126,25 @@ class Marketplace:
 
         :returns True or False. If the caller receives False, it should wait and then try again
         """
-        pass
+        logging.info("Entering add_to_cart with parameters: %s  ,  %s", str(cart_id), str(product))
+        # the lock is used to prevent multiple threads from doing operations simultaneously, preventing
+        # race condition 
+        # search for the product in every producer's list, if the product existsm add it to the cart,
+        # mark it as used
+        try:
+            with self.cart_lock:
+                for key, value in self.producers.items():
+                    for prod in value:
+                        if product == prod[0]:
+                            self.carts[cart_id].append((product, key))
+                            prod[1] = 1
+                            logging.info("Leaving add_to_cart, rpoduct added to cart")
+                            return True
+            logging.info("Leaving add_to_cart, product not in marketplace")
+            return False
+        except ValueError as exception:
+            logging.error("Error add_to_cart: %s", str(exception))
+            return False
 
     def remove_from_cart(self, cart_id, product):
         """
@@ -180,3 +199,14 @@ class TestMarketplace(unittest.TestCase):
         """
         self.assertEqual(self.marketplace.new_cart(), 0)
         self.assertEqual(self.marketplace.new_cart(), 1)
+
+    def test_add_to_cart(self):
+        """
+        test add_to_cart
+        Check if a published product can be added to the cart and an object that is not published cannot be added
+        """
+        self.marketplace.register_producer()
+        self.marketplace.publish("prod0", "tea")
+        self.marketplace.new_cart()
+        self.assertTrue(self.marketplace.add_to_cart(0, "tea"))
+        self.assertFalse(self.marketplace.add_to_cart(0, "coffee"))
