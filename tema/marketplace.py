@@ -6,6 +6,7 @@ Assignment 1
 March 2021
 """
 
+from threading import Lock
 
 class Marketplace:
     """
@@ -20,12 +21,28 @@ class Marketplace:
         :param queue_size_per_producer: the maximum size of a queue associated with each producer
         """
         self.queue_size_per_producer = queue_size_per_producer
+        self.producers = {} # dict containing all producers
+        self.register_producer_lock = Lock()
 
     def register_producer(self):
         """
         Returns an id for the producer that calls this.
         """
-        pass
+
+        # the lock is used o prevent multiple threads from registering producers simultaneously
+        # and avoid race condition
+        # id is formed by "prod" and current number of producers in the producers dict, making
+        # the id unique
+        try:
+            with self.register_producer_lock:
+                producer_id = "prod" + str(len(self.producers))
+
+                # initialize empty list of products for this producer
+                self.producers[producer_id] = []
+            return producer_id
+        except ValueError as exception:
+            print(str(exception))
+            return None
 
     def publish(self, producer_id, product):
         """
