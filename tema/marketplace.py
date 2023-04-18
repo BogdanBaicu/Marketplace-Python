@@ -102,10 +102,18 @@ class Marketplace:
         pass
 
 class TestMarketplace(unittest.TestCase):
+    """
+    Unittesting class
+    """
     def setUp(self):
         self.marketplace = Marketplace(10)
 
     def test_register_producer(self):
+        """
+        test register_producer
+        Check if the id of the first 2 producers is correct and the 3rd id is different to the
+        argument passed
+        """
         self.assertEqual(self.marketplace.register_producer(), "prod0")
         self.assertEqual(self.marketplace.register_producer(), "prod1")
         self.assertNotEqual(self.marketplace.register_producer(), "prod1")
