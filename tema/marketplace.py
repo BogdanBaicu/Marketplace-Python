@@ -12,9 +12,11 @@ from threading import Lock
 from logging.handlers import RotatingFileHandler
 
 # logging configuration
-logging.basicConfig(filename = "marketplace.log", level = logging.DEBUG, format = '%(asctime)s %(levelname)s: %(message)s')
+logging.basicConfig(filename = "marketplace.log", level = logging.DEBUG,
+                    format = '%(asctime)s %(levelname)s: %(message)s')
 logging.Formatter.converter = time.gmtime
-logging.getLogger('LOGGER').addHandler(RotatingFileHandler(filename = "marketplace.log", maxBytes = 1024 * 1024 * 5, backupCount = 10))
+logging.getLogger('LOGGER').addHandler(RotatingFileHandler(filename = "marketplace.log",
+                                                maxBytes = 1024 * 1024 * 5, backupCount = 10))
 
 class Marketplace:
     """
@@ -81,7 +83,7 @@ class Marketplace:
         if len(self.producers[producer_id]) == self.queue_size_per_producer:
             logging.error("Error publish: producer %s has the queue full", str(producer_id))
             return False
-    
+
         # add the product to producer's list and mark it as not reserved
         try:
             self.producers[producer_id].append([product, 0])
@@ -97,7 +99,6 @@ class Marketplace:
 
         :returns an int representing the cart_id
         """
-        
         logging.info("Entering new_cart")
         # the id is the current number of carts
         # the lock is used to prevent multiple threads from creating carts simultaneously and so
@@ -112,7 +113,6 @@ class Marketplace:
         except ValueError as exception:
             logging.error("Error new_cart: %s", str(exception))
             return None
-        
 
     def add_to_cart(self, cart_id, product):
         """
@@ -127,10 +127,10 @@ class Marketplace:
         :returns True or False. If the caller receives False, it should wait and then try again
         """
         logging.info("Entering add_to_cart with parameters: %s  ,  %s", str(cart_id), str(product))
-        # the lock is used to prevent multiple threads from doing operations simultaneously, preventing
-        # race condition 
-        # search for the product in every producer's list, if the product existsm add it to the cart,
-        # mark it as reserved
+        # the lock is used to prevent multiple threads from doing operations simultaneously,
+        # preventing race condition
+        # search for the product in every producer's list, if the product existsm add it to the
+        # cart, mark it as reserved
         try:
             with self.cart_lock:
                 for key, value in self.producers.items():
@@ -156,7 +156,8 @@ class Marketplace:
         :type product: Product
         :param product: the product to remove from cart
         """
-        logging.info("Entering remove_from_cart with parameters: %s  ,  %s", str(cart_id), str(product))
+        logging.info("Entering remove_from_cart with parameters: %s  ,  %s", str(cart_id),
+                     str(product))
 
         # the lock is used for the same purpose as above
         # search through the products in the cart for the given product
@@ -238,7 +239,8 @@ class TestMarketplace(unittest.TestCase):
     def test_add_to_cart(self):
         """
         test add_to_cart
-        Check if a published product can be added to the cart and an object that is not published cannot be added
+        Check if a published product can be added to the cart and an object that is not published
+        cannot be added
         """
         self.marketplace.register_producer()
         self.marketplace.publish("prod0", "tea")

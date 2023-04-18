@@ -64,10 +64,10 @@ class Consumer(Thread):
                     elif prod["type"] == "remove":
                         available = self.marketplace.remove_from_cart(cart_id, prod["product"])
                         quant -= 1
-            
+
             # place order
             prod = self.marketplace.place_order(cart_id)
 
             # print the output
             for item in prod:
-                print('{} bought {}'.format(self.name, item))
+                print(f'{self.name} bought {item}')
