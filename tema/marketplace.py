@@ -30,7 +30,9 @@ class Marketplace:
         """
         self.queue_size_per_producer = queue_size_per_producer
         self.producers = {} # dict containing all producers
+        self.carts = {} # dict containing all carts
         self.register_producer_lock = Lock()
+        self.new_cart_lock = Lock()
 
     def register_producer(self):
         """
@@ -94,7 +96,22 @@ class Marketplace:
 
         :returns an int representing the cart_id
         """
-        pass
+        
+        logging.info("Entering new_cart")
+        # the id is the current number of carts
+        # the lock is used to prevent multiple threads from creating carts simultaneously and so
+        # running into race condition
+        try:
+            with self.new_cart_lock:
+                cart_id = len(self.carts)
+            self.carts[cart_id] = [] # initialize empty cart
+
+            logging.info("Leaving new_cart")
+            return cart_id
+        except ValueError as exception:
+            logging.error("Error new_cart: %s", str(exception))
+            return None
+        
 
     def add_to_cart(self, cart_id, product):
         """
@@ -155,3 +172,11 @@ class TestMarketplace(unittest.TestCase):
         """
         self.marketplace.register_producer()
         self.assertTrue(self.marketplace.publish("prod0", "tea"))
+
+    def test_new_cart(self):
+        """
+        test new_cart
+        Check if the id of the first 2 carts is correct
+        """
+        self.assertEqual(self.marketplace.new_cart(), 0)
+        self.assertEqual(self.marketplace.new_cart(), 1)
