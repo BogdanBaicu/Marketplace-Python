@@ -184,7 +184,23 @@ class Marketplace:
         :type cart_id: Int
         :param cart_id: id cart
         """
-        pass
+        logging.info("Entering place_order with parameter: %s", str(cart_id))
+        products_list = []
+        # append all items in the cart to the products_list
+        try:
+            for item in self.carts[cart_id]:
+                products_list.append(item[0])
+                # the lock is used for the same purpose as above
+                with self.cart_lock:
+                    # delete product
+                    for value in self.producers.items():
+                        for prod in enumerate(value):
+                            if item[0] == prod[0]:
+                                del prod
+        except ValueError as exception:
+            logging.error("Error place_order: %s", str(exception))
+        logging.info("Leaving place_order")
+        return products_list
 
 class TestMarketplace(unittest.TestCase):
     """
@@ -244,3 +260,16 @@ class TestMarketplace(unittest.TestCase):
         self.marketplace.add_to_cart(0, "tea")
         self.marketplace.remove_from_cart(0, "coffee")
         self.assertEqual(len(self.marketplace.carts[0]), 1)
+
+    def test_place_order(self):
+        """
+        test place_order
+        Check if the list is correct
+        """
+        self.marketplace.register_producer()
+        self.marketplace.publish("prod0", "tea")
+        self.marketplace.publish("prod0", "coffee")
+        self.marketplace.new_cart()
+        self.marketplace.add_to_cart(0, "tea")
+        self.marketplace.add_to_cart(0, "coffee")
+        self.assertEqual(self.marketplace.place_order(0), ["tea", "coffee"])
