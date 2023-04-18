@@ -5,7 +5,7 @@ Computer Systems Architecture Course
 Assignment 1
 March 2021
 """
-
+import unittest
 from threading import Lock
 
 class Marketplace:
@@ -100,3 +100,12 @@ class Marketplace:
         :param cart_id: id cart
         """
         pass
+
+class TestMarketplace(unittest.TestCase):
+    def setUp(self):
+        self.marketplace = Marketplace(10)
+
+    def test_register_producer(self):
+        self.assertEqual(self.marketplace.register_producer(), "prod0")
+        self.assertEqual(self.marketplace.register_producer(), "prod1")
+        self.assertNotEqual(self.marketplace.register_producer(), "prod1")
