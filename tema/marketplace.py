@@ -6,7 +6,15 @@ Assignment 1
 March 2021
 """
 import unittest
+import logging
+import time
 from threading import Lock
+from logging.handlers import RotatingFileHandler
+
+# logging configuration
+logging.basicConfig(filename = "marketplace.log", level = logging.DEBUG, format = '%(asctime)s %(levelname)s: %(message)s')
+logging.Formatter.converter = time.gmtime
+logging.getLogger('LOGGER').addHandler(RotatingFileHandler(filename = "marketplace.log", maxBytes = 1024 * 1024 * 5, backupCount = 10))
 
 class Marketplace:
     """
@@ -29,6 +37,7 @@ class Marketplace:
         Returns an id for the producer that calls this.
         """
 
+        logging.info("Entering register_producer")
         # the lock is used o prevent multiple threads from registering producers simultaneously
         # and avoid race condition
         # id is formed by "prod" and current number of producers in the producers dict, making
@@ -37,11 +46,13 @@ class Marketplace:
             with self.register_producer_lock:
                 producer_id = "prod" + str(len(self.producers))
 
-                # initialize empty list of products for this producer
-                self.producers[producer_id] = []
+            # initialize empty list of products for this producer
+            self.producers[producer_id] = []
+
+            logging.info("Leaving register_producer")
             return producer_id
         except ValueError as exception:
-            print(str(exception))
+            logging.error("Error register_producer: %s", str(exception))
             return None
 
     def publish(self, producer_id, product):
