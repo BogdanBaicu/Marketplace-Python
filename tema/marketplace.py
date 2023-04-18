@@ -67,7 +67,26 @@ class Marketplace:
 
         :returns True or False. If the caller receives False, it should wait and then try again.
         """
-        pass
+        logging.info("Entering publish with parameters: %s  ,  %s", str(producer_id), str(product))
+
+        #check if producer_id is valid
+        if not producer_id in  self.producers:
+            logging.error("Error publish: producer_id %s does not exist", str(producer_id))
+            return False
+
+        #check if producer's queue is not full
+        if len(self.producers[producer_id]) == self.queue_size_per_producer:
+            logging.error("Error publish: producer %s has the queue full", str(producer_id))
+            return False
+    
+        # add the product to producer's list and mark it as not used
+        try:
+            self.producers[producer_id].append([product, 0])
+            logging.info("Leaving publish")
+            return True
+        except ValueError as exception:
+            logging.error("Error publish: %s", str(exception))
+            return False
 
     def new_cart(self):
         """
@@ -128,3 +147,11 @@ class TestMarketplace(unittest.TestCase):
         self.assertEqual(self.marketplace.register_producer(), "prod0")
         self.assertEqual(self.marketplace.register_producer(), "prod1")
         self.assertNotEqual(self.marketplace.register_producer(), "prod1")
+
+    def test_publish(self):
+        """
+        test publish
+        Check if a product is published successfully
+        """
+        self.marketplace.register_producer()
+        self.assertTrue(self.marketplace.publish("prod0", "tea"))
