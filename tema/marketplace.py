@@ -82,7 +82,7 @@ class Marketplace:
             logging.error("Error publish: producer %s has the queue full", str(producer_id))
             return False
     
-        # add the product to producer's list and mark it as not used
+        # add the product to producer's list and mark it as not reserved
         try:
             self.producers[producer_id].append([product, 0])
             logging.info("Leaving publish")
@@ -130,7 +130,7 @@ class Marketplace:
         # the lock is used to prevent multiple threads from doing operations simultaneously, preventing
         # race condition 
         # search for the product in every producer's list, if the product existsm add it to the cart,
-        # mark it as used
+        # mark it as reserved
         try:
             with self.cart_lock:
                 for key, value in self.producers.items():
@@ -156,7 +156,26 @@ class Marketplace:
         :type product: Product
         :param product: the product to remove from cart
         """
-        pass
+        logging.info("Entering remove_from_cart with parameters: %s  ,  %s", str(cart_id), str(product))
+
+        # the lock is used for the same purpose as above
+        # search through the products in the cart for the given product
+        try:
+            with self.cart_lock:
+                for item in self.carts[cart_id]:
+                    if item[0] == product:
+                        # remove from carte
+                        self.carts[cart_id].remove(item)
+                        # mark as not reserved
+                        for _, value in self.producers.items():
+                            for prod in value:
+                                if product == prod[0]:
+                                    prod[1] = 0
+                        logging.info("Leaving remove_from_cart")
+                        return
+            logging.info("Leaving remove_from_cart")
+        except ValueError as exception:
+            logging.error("Error remove_from_cart: %s", str(exception))
 
     def place_order(self, cart_id):
         """
@@ -210,3 +229,18 @@ class TestMarketplace(unittest.TestCase):
         self.marketplace.new_cart()
         self.assertTrue(self.marketplace.add_to_cart(0, "tea"))
         self.assertFalse(self.marketplace.add_to_cart(0, "coffee"))
+
+    def test_remove_from_cart(self):
+        """
+        test remove_remove_from_cart
+        Check if only products existing in the cart can be removed
+        """
+        self.marketplace.register_producer()
+        self.marketplace.publish("prod0", "tea")
+        self.marketplace.new_cart()
+        self.marketplace.add_to_cart(0, "tea")
+        self.marketplace.remove_from_cart(0, "tea")
+        self.assertEqual(len(self.marketplace.carts[0]), 0)
+        self.marketplace.add_to_cart(0, "tea")
+        self.marketplace.remove_from_cart(0, "coffee")
+        self.assertEqual(len(self.marketplace.carts[0]), 1)
