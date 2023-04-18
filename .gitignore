@@ -1,0 +1,7 @@
+# Exclude output files
+*.out
+*.out.sorted
+!/*.ref.out
+
+# Exclude __pycache__
+__pycache__
